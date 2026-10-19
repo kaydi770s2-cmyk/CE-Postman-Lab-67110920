@@ -1,0 +1,822 @@
+{
+  "info": {
+    "name": "CE-Postman-Lab READY RUN ALL",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "แล็บ Postman สำหรับนักศึกษา ป.ตรี วิศวกรรมคอมพิวเตอร์\nพร้อมรันทั้งชุด: Import ไฟล์นี้ไฟล์เดียว เลือก Collection > Run เลือกครบทุก request\nIterations=1, Delay=500 ms, Environment=No environment, ไม่เลือก Data file\n17 requests, 30 tests: Core 11/20, DataDriven 3/5, Extension 3/5\nAPI สาธารณะฟรี ต้องเชื่อมต่ออินเทอร์เน็ต JSONPlaceholder จำลองการเขียนข้อมูล\nCollection Pre-request กำหนด base_url, echo_url และ user_id ให้พร้อมใช้\nชุดนี้มี 3 data requests เพื่อรันทุกกรณีในรอบเดียว ชุดบทฝึก instructor แยกต่างหากยังใช้ pm.info.iteration และ 3 iterations"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://jsonplaceholder.typicode.com",
+      "type": "string"
+    },
+    {
+      "key": "echo_url",
+      "value": "https://postman-echo.com",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "post_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "existing_post_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "created_post_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01-Core",
+      "item": [
+        {
+          "name": "01 GET post",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/{{post_id}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset(\"created_post_id\");",
+                  "pm.collectionVariables.set(\"existing_post_id\", \"1\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is JSON\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\"))",
+                  "    .to.include(\"application/json\");",
+                  "});",
+                  "pm.test(\"Post has expected id and fields\", () => {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data.id).to.eql(1);",
+                  "  pm.expect(data.userId).to.be.a(\"number\");",
+                  "  pm.expect(data.title).to.be.a(\"string\");",
+                  "  pm.expect(data.body).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 GET filtered posts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts?userId={{user_id}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Every post belongs to requested user\", () => {",
+                  "  const data = pm.response.json();",
+                  "  const uid = Number(pm.variables.get(\"user_id\"));",
+                  "  pm.expect(data).to.be.an(\"array\").that.is.not.empty;",
+                  "  data.forEach(post => pm.expect(post.userId).to.eql(uid));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 POST create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"CE API Lab\",\n  \"body\": \"Created from Postman\",\n  \"userId\": {{user_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Created response matches request\", () => {",
+                  "  const data = pm.response.json();",
+                  "  const sent = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "  pm.expect(data.title).to.eql(sent.title);",
+                  "  pm.expect(data.body).to.eql(sent.body);",
+                  "  pm.expect(data.userId).to.eql(sent.userId);",
+                  "  pm.expect(data.id).to.be.a(\"number\");",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set(\"created_post_id\", pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 GET created id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/{{created_post_id}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Unknown resource returns 404\", () => {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 GET missing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/999999",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Unknown resource returns 404\", () => {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 PUT replace",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/1",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"title\": \"Updated title\",\n  \"body\": \"Updated body\",\n  \"userId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"PUT response matches complete body\", () => {",
+                  "  const sent = JSON.parse(pm.request.body.raw);",
+                  "  pm.expect(pm.response.json()).to.deep.eql(sent);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 PATCH title",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/1",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Patched title\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Title changed and remaining fields exist\", () => {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data.id).to.eql(1);",
+                  "  pm.expect(data.title).to.eql(\"Patched title\");",
+                  "  pm.expect(data.body).to.be.a(\"string\");",
+                  "  pm.expect(data.userId).to.be.a(\"number\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 DELETE post",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/1",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Delete response is an empty object\", () => {",
+                  "  pm.expect(pm.response.json()).to.deep.eql({});",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 GET after delete",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/1",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Original post still exists after simulated DELETE\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().id).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 GET capture id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/1",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Capture an existing post id\", () => {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data.id).to.eql(1);",
+                  "  pm.collectionVariables.set(\"existing_post_id\", data.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 GET comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/{{existing_post_id}}/comments",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Comments belong to captured post\", () => {",
+                  "  const data = pm.response.json();",
+                  "  const id = Number(pm.collectionVariables.get(\"existing_post_id\"));",
+                  "  pm.expect(data).to.be.an(\"array\").that.is.not.empty;",
+                  "  data.forEach(comment => pm.expect(comment.postId).to.eql(id));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"post_id\", \"1\");"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02-DataDriven",
+      "item": [
+        {
+          "name": "01 GET dataset post 1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/{{post_id}}",
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "GET /posts/1, expected HTTP 200. Run all collection with 1 iteration."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"post_id\", 1);",
+                  "pm.variables.set(\"expected_status\", 200);",
+                  "console.log(\"Case 1: post_id=1, expected_status=200\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expected = Number(pm.variables.get(\"expected_status\"));",
+                  "const id = Number(pm.variables.get(\"post_id\"));",
+                  "",
+                  "pm.test(\"Status matches dataset\", () => {",
+                  "    pm.expect(pm.response.code).to.eql(expected);",
+                  "});",
+                  "",
+                  "if (expected === 200) {",
+                  "    pm.test(\"Response id matches dataset\", () => {",
+                  "        pm.expect(pm.response.json().id).to.eql(id);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 GET dataset post 2",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/{{post_id}}",
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "GET /posts/2, expected HTTP 200. Run all collection with 1 iteration."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"post_id\", 2);",
+                  "pm.variables.set(\"expected_status\", 200);",
+                  "console.log(\"Case 2: post_id=2, expected_status=200\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expected = Number(pm.variables.get(\"expected_status\"));",
+                  "const id = Number(pm.variables.get(\"post_id\"));",
+                  "",
+                  "pm.test(\"Status matches dataset\", () => {",
+                  "    pm.expect(pm.response.code).to.eql(expected);",
+                  "});",
+                  "",
+                  "if (expected === 200) {",
+                  "    pm.test(\"Response id matches dataset\", () => {",
+                  "        pm.expect(pm.response.json().id).to.eql(id);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 GET dataset post 99999",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/posts/{{post_id}}",
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "GET /posts/99999, expected HTTP 404. Run all collection with 1 iteration."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"post_id\", 99999);",
+                  "pm.variables.set(\"expected_status\", 404);",
+                  "console.log(\"Case 3: post_id=99999, expected_status=404\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expected = Number(pm.variables.get(\"expected_status\"));",
+                  "const id = Number(pm.variables.get(\"post_id\"));",
+                  "",
+                  "pm.test(\"Status matches dataset\", () => {",
+                  "    pm.expect(pm.response.code).to.eql(expected);",
+                  "});",
+                  "",
+                  "if (expected === 200) {",
+                  "    pm.test(\"Response id matches dataset\", () => {",
+                  "        pm.expect(pm.response.json().id).to.eql(id);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03-Extension",
+      "item": [
+        {
+          "name": "01 POST echo run id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{echo_url}}/post",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"runId\": \"{{run_id}}\",\n  \"student\": \"CE-demo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"run_id\", pm.variables.replaceIn(\"{{$guid}}\"));",
+                  "console.log(\"run_id:\", pm.variables.get(\"run_id\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Echo returns generated run id\", () => {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data.json.runId).to.eql(pm.variables.get(\"run_id\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 GET auth valid",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{echo_url}}/basic-auth",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "postman",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "password",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Valid credentials return 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"User is authenticated\", () => {",
+                  "  pm.expect(pm.response.json().authenticated).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 GET auth missing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.44.0",
+                "type": "text"
+              }
+            ],
+            "url": "{{echo_url}}/basic-auth",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Missing credentials return 401\", () => {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.variables.set(\"base_url\", \"https://jsonplaceholder.typicode.com\");",
+          "pm.variables.set(\"echo_url\", \"https://postman-echo.com\");",
+          "pm.variables.set(\"user_id\", \"1\");"
+        ]
+      }
+    }
+  ]
+}
